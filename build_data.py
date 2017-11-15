@@ -14,20 +14,21 @@ from PIL import Image
 import tensorflow as tf
 from glob import glob
 
-tf.flags.DEFINE_string("dataset_dir", "data", "The path of the dataset.")
-tf.flags.DEFINE_string("dataset", "faces", "The name of the dataset.")
-tf.flags.DEFINE_string("image_fname_pattern", "*.jpg",
-                       "The pattern of the image name")
-tf.flags.DEFINE_float("train_data_rate", 0.8,
-                      "The rate of the train data process")
-tf.flags.DEFINE_float("val_data_rate", 0.1,
-                      "The rate of the validate data process")
-tf.flags.DEFINE_float("test_data_rate", 0.1,
-                      "The rate of the test data process")
-tf.flags.DEFINE_string("dataset_h_dir", "new",
-                       "The new dir of the handled data")
+flags = tf.app.flags
+flags.DEFINE_string("dataset_dir", "data", "The path of the dataset.")
+flags.DEFINE_string("dataset", "faces", "The name of the dataset.")
+flags.DEFINE_string("image_fname_pattern", "*.jpg",
+                    "The pattern of the image name")
+flags.DEFINE_float("train_data_rate", 0.8,
+                   "The rate of the train data process")
+flags.DEFINE_float("val_data_rate", 0.1,
+                   "The rate of the validate data process")
+flags.DEFINE_float("test_data_rate", 0.1,
+                   "The rate of the test data process")
+flags.DEFINE_string("dataset_h_dir", "new",
+                    "The new dir of the handled data")
 
-FLAGS = tf.flags.FLAGS
+FLAGS = flags.FLAGS
 
 
 def bytes_feature(value):
@@ -44,8 +45,11 @@ def write(filename, image_names):
         "./", FLAGS.dataset_dir, FLAGS.dataset_h_dir, filename))
     for image_name in image_names:
         image = Image.open(image_name, mode="r")
+        image = image.resize((96, 96))
         example = tf.train.Example(features=tf.train.Features(
             feature={"image": bytes_feature(image.tobytes())}))
+        Image.frombytes("RGB", (96, 96), image.tobytes()).show()
+        break
         writer.write(example.SerializeToString())
     writer.close()
 
@@ -68,6 +72,7 @@ def main(_):
     train = dataset[:train_num]
     validate = dataset[train_num:train_num + val_num]
     test = dataset[train_num + val_num:]
+    print(train[0])
 
     write("train.tfrecords", train)
     write("validate.tfrecords", validate)
